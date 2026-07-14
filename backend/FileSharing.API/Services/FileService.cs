@@ -70,7 +70,7 @@ public class FileService : IFileService
         var entity = await _repository.GetByCodeAsync(code)
             ?? throw new KeyNotFoundException("File not found.");
 
-        return MapToDto(entity, string.Empty);
+        return MapToDto(entity, "http://localhost:5000");
     }
 
     public async Task<(Stream stream, string mimeType, string fileName)> DownloadFileAsync(string code)
