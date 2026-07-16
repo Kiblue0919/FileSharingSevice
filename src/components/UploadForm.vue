@@ -34,6 +34,7 @@
 <script setup>
 import { ref } from 'vue'
 import { uploadFile } from '../services/fileService'
+import FilePreview from './FilePreview.vue'
 
 const selectedFile = ref(null)
 const uploadedLink = ref('')
@@ -53,11 +54,8 @@ const upload = async () => {
   )
 
   try {
-    const response =
-      await uploadFile(formData)
-
-    uploadedLink.value =
-      response.data.downloadUrl
+    const response = await uploadFile(formData)
+    uploadedLink.value = response.data.downloadUrl
 
   } catch (error) {
     console.error(error)
@@ -65,12 +63,13 @@ const upload = async () => {
 }
 
 const copyLink = async () => {
-  await navigator.clipboard.writeText(
-    uploadedLink.value
-  )
-
+  await navigator.clipboard.writeText(uploadedLink.value)
   alert('Copied!')
 }
+</script>
+
+<script>
+export default { components: { FilePreview } }
 </script>
 
 <style scoped>

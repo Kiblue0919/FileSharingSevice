@@ -20,6 +20,10 @@
     <!-- Success -->
     <div v-else>
 
+      <div v-if="file.content && file.type && file.type.startsWith('image/')">
+        <img :src="file.content" alt="preview" style="max-width:100%; margin-bottom:12px" />
+      </div>
+
       <h2>{{ file.originalFileName }}</h2>
 
       <p>

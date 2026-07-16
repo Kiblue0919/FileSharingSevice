@@ -2,7 +2,11 @@
   <div class="container">
     <h1>File Sharing Service</h1>
 
-    <UploadForm />
+      <div style="margin-bottom:16px">
+        <router-link to="/history">View Uploaded Files</router-link>
+      </div>
+
+      <UploadForm />
   </div>
 </template>
 
