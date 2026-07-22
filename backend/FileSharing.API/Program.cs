@@ -1,4 +1,5 @@
 using FileSharing.API.Data;
+using FileSharing.API.Services;
 using FileSharing.API.Interfaces;
 using FileSharing.API.Repositories;
 using FileSharing.API.Services;
@@ -16,6 +17,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // DI
 builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IStorageService, CloudinaryStorageService>();
+builder.Services.AddHostedService<CleanupHostedService>();
 
 // CORS
 builder.Services.AddCors(options =>

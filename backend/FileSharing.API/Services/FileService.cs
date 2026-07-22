@@ -8,16 +8,19 @@ public class FileService : IFileService
 {
     private readonly IFileRepository _repository;
     private readonly IConfiguration _configuration;
-    private readonly string _uploadPath;
+    private readonly IStorageService _storageService;
 
     private static readonly string[] AllowedImageTypes =
         { "image/jpeg", "image/png", "image/gif", "image/webp" };
 
-    public FileService(IFileRepository repository, IConfiguration configuration)
+    public FileService(
+        IFileRepository repository,
+        IConfiguration configuration,
+        IStorageService storageService)
     {
         _repository = repository;
         _configuration = configuration;
-        _uploadPath = _configuration["FileStorage:UploadPath"] ?? "wwwroot/uploads";
+        _storageService = storageService;
     }
 
     public async Task<FileResponseDto> UploadFileAsync(UploadFileRequestDto request, string baseUrl)
@@ -31,14 +34,12 @@ public class FileService : IFileService
 
         var code = GenerateCode();
 
-        var fileName = $"{code}_{request.File.FileName}";
-        var filePath = Path.Combine(_uploadPath, fileName);
-        Directory.CreateDirectory(_uploadPath);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await request.File.CopyToAsync(stream);
-        }
+        // Upload lên Cloudinary thay vì local disk
+        using var stream = request.File.OpenReadStream();
+        var publicId = await _storageService.UploadFileAsync(
+            stream,
+            request.File.FileName,
+            request.File.ContentType);
 
         DateTime? expiresAt = request.ExpiresIn switch
         {
@@ -54,7 +55,7 @@ public class FileService : IFileService
             OriginalFileName = request.File.FileName,
             MimeType = request.File.ContentType,
             SizeBytes = request.File.Length,
-            StoragePath = filePath,
+            StoragePath = publicId, // lưu Cloudinary public ID thay vì local path
             MaxDownloads = request.MaxDownloads,
             ExpiresAt = expiresAt,
             CreatedAt = DateTime.UtcNow
@@ -70,7 +71,7 @@ public class FileService : IFileService
         var entity = await _repository.GetByCodeAsync(code)
             ?? throw new KeyNotFoundException("File not found.");
 
-        return MapToDto(entity, string.Empty);
+        return MapToDto(entity, "http://localhost:5000");
     }
 
     public async Task<(Stream stream, string mimeType, string fileName)> DownloadFileAsync(string code)
@@ -80,13 +81,13 @@ public class FileService : IFileService
 
         if (entity.ExpiresAt.HasValue && entity.ExpiresAt < DateTime.UtcNow)
         {
-            await DeleteFileFromDiskAndDb(entity);
+            await DeleteFileFromStorageAndDb(entity);
             throw new InvalidOperationException("EXPIRED:This file has expired and has been deleted.");
         }
 
         if (entity.MaxDownloads.HasValue && entity.DownloadCount >= entity.MaxDownloads)
         {
-            await DeleteFileFromDiskAndDb(entity);
+            await DeleteFileFromStorageAndDb(entity);
             throw new InvalidOperationException("LIMIT:This file has reached its download limit and has been deleted.");
         }
 
@@ -95,10 +96,14 @@ public class FileService : IFileService
 
         if (entity.MaxDownloads.HasValue && entity.DownloadCount >= entity.MaxDownloads)
         {
-            await DeleteFileFromDiskAndDb(entity);
+            await DeleteFileFromStorageAndDb(entity);
         }
 
-        var stream = new FileStream(entity.StoragePath, FileMode.Open, FileAccess.Read);
+        // Download từ Cloudinary
+        var fileUrl = _storageService.GetFileUrl(entity.StoragePath);
+        var httpClient = new HttpClient();
+        var stream = await httpClient.GetStreamAsync(fileUrl);
+
         return (stream, entity.MimeType, entity.OriginalFileName);
     }
 
@@ -107,14 +112,12 @@ public class FileService : IFileService
         var entity = await _repository.GetByCodeAsync(code)
             ?? throw new KeyNotFoundException("File not found.");
 
-        await DeleteFileFromDiskAndDb(entity);
+        await DeleteFileFromStorageAndDb(entity);
     }
 
-    private async Task DeleteFileFromDiskAndDb(FileEntity entity)
+    private async Task DeleteFileFromStorageAndDb(FileEntity entity)
     {
-        if (File.Exists(entity.StoragePath))
-            File.Delete(entity.StoragePath);
-
+        await _storageService.DeleteFileAsync(entity.StoragePath);
         await _repository.DeleteAsync(entity);
     }
 
