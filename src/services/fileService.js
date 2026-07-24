@@ -35,8 +35,7 @@ export const uploadFile = async (formData) => {
     type: file && file.type ? file.type : null,
   }
 
-  if (file && file.type && file.type.startsWith('image/')) {
-    // read as data URL
+  if (file) {
     const dataUrl = await new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = () => resolve(reader.result)
@@ -75,14 +74,30 @@ export const deleteFile = async (code) => {
 }
 
 export const downloadFile = (code) => {
-  const f = filesStore.find((x) => x.code === code) || { originalFileName: `${code}.txt` }
-  const blob = new Blob([`Fake content for ${f.originalFileName}`], { type: 'application/octet-stream' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = f.originalFileName
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
+  const f = filesStore.find((x) => x.code === code)
+  if (!f) return
+
+  const download = async () => {
+    let blob
+
+    if (f.content) {
+      const response = await fetch(f.content)
+      blob = await response.blob()
+    } else {
+      blob = new Blob([], { type: f.type || 'application/octet-stream' })
+    }
+
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = f.originalFileName || `${code}`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  download().catch((error) => {
+    console.error('Download failed:', error)
+  })
 }
