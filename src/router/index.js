@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import UploadView from '../views/UploadView.vue'
 import FileView from '../views/FileView.vue'
+import HistoryView from '../views/HistoryView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,6 +13,10 @@ const router = createRouter({
     {
       path: '/f/:code',
       component: FileView
+    },
+    {
+      path: '/history',
+      component: HistoryView
     }
   ]
 })
