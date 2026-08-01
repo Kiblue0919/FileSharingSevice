@@ -37,7 +37,7 @@ public class AppDbContext : DbContext
                   .HasDefaultValue(0);
 
             entity.Property(e => e.CreatedAt)
-                  .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
         });
     }
 }

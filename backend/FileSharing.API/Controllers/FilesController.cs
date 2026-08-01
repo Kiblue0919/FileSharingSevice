@@ -18,7 +18,7 @@ public class FilesController : ControllerBase
     // POST /api/files
     [HttpPost]
     public async Task<IActionResult> Upload(
-        IFormFile file,
+        [FromForm] IFormFile file,
         [FromForm] int? maxDownloads,
         [FromForm] string? expiresIn,
         [FromForm] string? password)
