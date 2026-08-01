@@ -13,6 +13,19 @@ public class FileService : IFileService
     private static readonly string[] AllowedImageTypes =
         { "image/jpeg", "image/png", "image/gif", "image/webp" };
 
+    private static readonly string[] AllowedMimeTypes =
+    {
+        "image/jpeg", "image/png", "image/gif", "image/webp",
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain",
+        "application/zip",
+        "video/mp4"
+    };
+
     public FileService(
         IFileRepository repository,
         IConfiguration configuration,
@@ -37,6 +50,9 @@ public class FileService : IFileService
         var maxSize = long.Parse(_configuration["FileStorage:MaxFileSizeBytes"] ?? "10485760");
         if (request.File.Length > maxSize)
             throw new ArgumentException("File exceeds the maximum allowed size of 10 MB.");
+
+        if (!AllowedMimeTypes.Contains(request.File.ContentType))
+            throw new ArgumentException($"File type '{request.File.ContentType}' is not allowed.");
 
         var code = GenerateCode();
 
