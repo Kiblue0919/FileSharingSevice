@@ -39,7 +39,12 @@ public class FileRepository : IFileRepository
 		await _context.SaveChangesAsync();
 	}
 
-	public async Task<List<FileEntity>> GetExpiredFilesAsync()
+    public async Task<List<FileEntity>> GetAllAsync()
+    {
+        return await _context.Files.ToListAsync();
+    }
+
+    public async Task<List<FileEntity>> GetExpiredFilesAsync()
 	{
 		return await _context.Files
 			.Where(f =>
