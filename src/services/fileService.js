@@ -6,9 +6,7 @@ const api = axios.create({
 
 export const uploadFile = (formData, onUploadProgress) => {
   return api.post('/', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    },
+    headers: { 'Content-Type': 'multipart/form-data' },
     onUploadProgress
   })
 }
@@ -18,12 +16,17 @@ export const getFileMetadata = (code) => {
 }
 
 export const downloadFile = (code) => {
-  window.open(
-    `http://localhost:5000/api/files/${code}/download`,
-    '_blank'
-  )
+  window.open(`http://localhost:5117/api/files/${code}/download`, '_blank')
 }
 
 export const deleteFile = (code) => {
   return api.delete(`/${code}`)
+}
+
+export const listFiles = () => {
+  return api.get('/')
+}
+
+export const updateFile = (code, data) => {
+  return api.put(`/${code}`, data)
 }
