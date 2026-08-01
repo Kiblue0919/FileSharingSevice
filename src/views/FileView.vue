@@ -32,8 +32,8 @@
 
       <div class="file-preview">
         <img
-          v-if="file.content && file.type && file.type.startsWith('image/')"
-          :src="file.content"
+          v-if="file.fileUrl && file.isImage"
+          :src="file.fileUrl"
           alt="preview"
           class="preview-image"
         />

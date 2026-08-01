@@ -9,4 +9,5 @@ public interface IFileRepository
     Task UpdateAsync(FileEntity file);
     Task DeleteAsync(FileEntity file);
     Task<List<FileEntity>> GetExpiredFilesAsync();
+    Task<List<FileEntity>> GetAllAsync();
 }

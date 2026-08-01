@@ -7,14 +7,16 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node
 node_modules
-.DS_Store
 dist
 dist-ssr
 coverage
 *.local
+*.tsbuildinfo
+.eslintcache
 
-# Editor directories and files
+# Editor
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -23,17 +25,22 @@ coverage
 *.njsproj
 *.sln
 *.sw?
-
-*.tsbuildinfo
-
-.eslintcache
-
-# Cypress
-/cypress/videos/
-/cypress/screenshots/
-
-# Vitest
-__screenshots__/
+.vs/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# .NET
+**/bin/
+**/obj/
+
+# Uploads (local files)
+**/wwwroot/uploads/
+
+# Secrets
+backend/FileSharing.API/appsettings.Development.json
+
+# Cypress / Vitest
+/cypress/videos/
+/cypress/screenshots/
+__screenshots__/

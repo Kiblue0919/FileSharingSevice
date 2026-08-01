@@ -15,7 +15,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // DI
 builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddScoped<IStorageService, CloudinaryStorageService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddHostedService<CleanupHostedService>();
 
 // CORS
 builder.Services.AddCors(options =>

@@ -21,7 +21,6 @@ public class CloudinaryStorageService : IStorageService
 
     public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string mimeType)
     {
-        // Tạo public ID từ filename (bỏ extension)
         var publicId = $"filesharing/{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}";
 
         var uploadParams = new RawUploadParams
@@ -51,6 +50,6 @@ public class CloudinaryStorageService : IStorageService
 
     public string GetFileUrl(string publicId)
     {
-        return _cloudinary.Api.UrlImgUp.BuildUrl(publicId);
+        return _cloudinary.Api.Url.ResourceType("raw").BuildUrl(publicId);
     }
 }

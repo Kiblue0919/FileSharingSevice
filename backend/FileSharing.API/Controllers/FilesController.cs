@@ -58,6 +58,21 @@ public class FilesController : ControllerBase
         }
     }
 
+    // GET /api/files
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        try
+        {
+            var result = await _fileService.GetAllFilesAsync();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
     // GET /api/files/{code}/download
     [HttpGet("{code}/download")]
     public async Task<IActionResult> Download(string code)
