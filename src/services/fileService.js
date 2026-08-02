@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://filesharingsevice-production-eb82.up.railway.app/'
+  baseURL: 'https://filesharingsevice-production-eb82.up.railway.app/api/files'
 })
 
 export const uploadFile = (formData, onUploadProgress) => {
@@ -16,7 +16,7 @@ export const getFileMetadata = (code) => {
 }
 
 export const downloadFile = (code) => {
-  window.open(`https://filesharingsevice-production-187e.up.railway.app/api/files/${code}/download`, '_blank')
+  window.open(`https://filesharingsevice-production-eb82.up.railway.app/api/files/${code}/download`, '_blank')
 }
 
 export const deleteFile = (code) => {
