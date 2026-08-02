@@ -21,10 +21,12 @@ builder.Services.AddHostedService<CleanupHostedService>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowAll", policy =>
+    {
         policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
 });
 
 // Swagger
@@ -32,6 +34,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// // Turn on CORS right at the top of the pipeline
+app.UseCors("AllowAll");
 
 // Auto migrate on startup
 using (var scope = app.Services.CreateScope())
@@ -42,6 +47,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors("AllowFrontend");
+
 app.MapControllers();
+
 app.Run();
