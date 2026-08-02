@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://filesharingsevice-production-187e.up.railway.app/api/files'
+  baseURL: 'http://filesharingsevice-production-187e.up.railway.app/api/files'
 })
 
 export const uploadFile = (formData, onUploadProgress) => {
