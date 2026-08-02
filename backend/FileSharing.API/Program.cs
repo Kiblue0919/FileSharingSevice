@@ -23,7 +23,9 @@ builder.Services.AddHostedService<CleanupHostedService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "https://magnificent-motivation-production-ccf8.up.railway.app")
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
