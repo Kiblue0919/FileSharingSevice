@@ -4,14 +4,15 @@ using FileSharing.API.Repositories;
 using FileSharing.API.Services;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
-
 // DbContext
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"]
                     ?? builder.Configuration["ConnectionStrings__DefaultConnection"]
                     ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0))));
+
+// DI
 
 // DI
 builder.Services.AddScoped<IFileRepository, FileRepository>();
