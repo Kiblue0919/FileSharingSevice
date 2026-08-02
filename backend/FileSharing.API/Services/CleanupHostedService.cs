@@ -23,7 +23,14 @@ public class CleanupHostedService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await RunCleanupAsync();
+            try
+            {
+                await RunCleanupAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cleanup service encountered an error. Will retry next interval.");
+            }
             await Task.Delay(_interval, stoppingToken);
         }
     }
