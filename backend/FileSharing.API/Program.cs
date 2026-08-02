@@ -4,6 +4,8 @@ using FileSharing.API.Repositories;
 using FileSharing.API.Services;
 using Microsoft.EntityFrameworkCore;
 
+var builder = WebApplication.CreateBuilder(args);
+
 // DbContext
 var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"]
                     ?? builder.Configuration["ConnectionStrings__DefaultConnection"]
@@ -13,11 +15,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0))));
 
 // DI
-
-// DI
 builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IStorageService, CloudinaryStorageService>();
 builder.Services.AddScoped<IFileService, FileService>();
+
 builder.Services.AddHostedService<CleanupHostedService>();
 
 builder.Services.AddCors(options =>
@@ -46,7 +47,7 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var app = builder.Build();
 
-// // Turn on CORS right at the top of the pipeline
+// Turn on CORS right at the top of the pipeline
 app.UseCors("AllowAll");
 
 // Auto migrate on startup
