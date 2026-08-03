@@ -18,16 +18,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IStorageService, CloudinaryStorageService>();
 builder.Services.AddScoped<IFileService, FileService>();
-
 builder.Services.AddHostedService<CleanupHostedService>();
 
+// CORS — chỉ đăng ký DUY NHẤT policy "FrontendPolicy"
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.WithOrigins("https://magnificent-motivation-production-ccf8.up.railway.app")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
@@ -47,8 +47,8 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var app = builder.Build();
 
-// Turn on CORS right at the top of the pipeline
-app.UseCors("AllowAll");
+// CORS phải đứng TRƯỚC MapControllers, và đúng tên policy đã đăng ký ở trên
+app.UseCors("FrontendPolicy");
 
 // Auto migrate on startup
 using (var scope = app.Services.CreateScope())
@@ -66,7 +66,6 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
-
 app.MapControllers();
 
 app.Run();
