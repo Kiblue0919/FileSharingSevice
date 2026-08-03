@@ -25,7 +25,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins("https://magnificent-motivation-production-ccf8.up.railway.app")
+        policy.WithOrigins("https://filesharingsevice-production-eb82.up.railway.app")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
