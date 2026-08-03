@@ -54,6 +54,8 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var app = builder.Build();
 
+app.UseRouting();
+
 // CORS phải đứng TRƯỚC MapControllers, và đúng tên policy đã đăng ký ở trên
 app.UseCors("FrontendPolicy");
 
@@ -73,6 +75,6 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
-app.MapControllers();
+app.MapControllers().RequireCors("FrontendPolicy");
 
 app.Run();
