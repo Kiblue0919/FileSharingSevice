@@ -20,17 +20,19 @@ builder.Services.AddScoped<IStorageService, CloudinaryStorageService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddHostedService<CleanupHostedService>();
 
-// CORS — chỉ đăng ký DUY NHẤT policy "FrontendPolicy"
+// CORS 
+var frontendUrl = builder.Configuration["FrontendUrl"] 
+                ?? "https://filesharingsevice-production-eb82.up.railway.app";
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins("https://magnificent-motivation-production-ccf8.up.railway.app") // domain FRONTEND, không phải backend
+        policy.WithOrigins(frontendUrl)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
-
 // Controllers
 builder.Services.AddControllers();
 
