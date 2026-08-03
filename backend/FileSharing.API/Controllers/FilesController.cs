@@ -83,8 +83,10 @@ public class FilesController : ControllerBase
     {
         try
         {
-            var fileUrl = await _fileService.GetDownloadUrlAsync(code);
-            return Redirect(fileUrl);
+            var (stream, mimeType, fileName) = await _fileService.DownloadFileAsync(code);
+            
+            // Returns the file stream directly to trigger an attachment download in the browser
+            return File(stream, mimeType, fileName);
         }
         catch (KeyNotFoundException)
         {
@@ -99,7 +101,6 @@ public class FilesController : ControllerBase
             return StatusCode(410, new { message = ex.Message.Replace("LIMIT:", "") });
         }
     }
-
     // DELETE /api/files/{code}
     [HttpDelete("{code}")]
     public async Task<IActionResult> Delete(string code)
