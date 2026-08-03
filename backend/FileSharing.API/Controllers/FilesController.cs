@@ -83,8 +83,8 @@ public class FilesController : ControllerBase
     {
         try
         {
-            var (stream, mimeType, fileName) = await _fileService.DownloadFileAsync(code);
-            return File(stream, mimeType, fileName);
+            var fileUrl = await _fileService.GetDownloadUrlAsync(code);
+            return Redirect(fileUrl);
         }
         catch (KeyNotFoundException)
         {

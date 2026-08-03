@@ -9,6 +9,8 @@ public interface IFileService
 
     Task<FileResponseDto> GetFileMetadataAsync(string code);
 
+    Task<string> GetDownloadUrlAsync(string code);
+
     Task<(Stream stream, string mimeType, string fileName)>
         DownloadFileAsync(string code);
 

@@ -122,6 +122,37 @@ public class FileService : IFileService
         return await MapToDtoAsync(entity);
     }
 
+    public async Task<string> GetDownloadUrlAsync(string code)
+    {
+        var entity = await _repository.GetByCodeAsync(code)
+            ?? throw new KeyNotFoundException("File not found.");
+
+        if (entity.ExpiresAt.HasValue &&
+            entity.ExpiresAt < DateTime.UtcNow)
+        {
+            await DeleteFileFromStorageAndDb(entity);
+
+            throw new InvalidOperationException(
+                "EXPIRED:This file has expired and has been deleted.");
+        }
+
+        if (entity.MaxDownloads.HasValue &&
+            entity.DownloadCount >= entity.MaxDownloads)
+        {
+            await DeleteFileFromStorageAndDb(entity);
+
+            throw new InvalidOperationException(
+                "LIMIT:This file has reached its download limit and has been deleted.");
+        }
+
+        entity.DownloadCount++;
+        await _repository.UpdateAsync(entity);
+
+        return await _storageService.ResolveFileUrlAsync(
+            entity.StoragePath,
+            entity.MimeType);
+    }
+
     public async Task<(Stream stream, string mimeType, string fileName)>
         DownloadFileAsync(string code)
     {
