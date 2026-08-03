@@ -23,14 +23,19 @@ public class CloudinaryStorageService : IStorageService
     {
         var publicId = $"filesharing/{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid():N}";
 
-        var uploadParams = new RawUploadParams
-        {
-            File = new FileDescription(fileName, fileStream),
-            PublicId = publicId,
-            Overwrite = false
-        };
-
-        var result = await _cloudinary.UploadAsync(uploadParams);
+        var result = mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+            ? await _cloudinary.UploadAsync(new ImageUploadParams
+            {
+                File = new FileDescription(fileName, fileStream),
+                PublicId = publicId,
+                Overwrite = false
+            })
+            : await _cloudinary.UploadAsync(new RawUploadParams
+            {
+                File = new FileDescription(fileName, fileStream),
+                PublicId = publicId,
+                Overwrite = false
+            });
 
         if (result.Error != null)
             throw new Exception($"Cloudinary upload failed: {result.Error.Message}");
@@ -48,8 +53,12 @@ public class CloudinaryStorageService : IStorageService
         await _cloudinary.DestroyAsync(deleteParams);
     }
 
-    public string GetFileUrl(string publicId)
+    public string GetFileUrl(string publicId, string mimeType)
     {
-        return _cloudinary.Api.Url.ResourceType("raw").BuildUrl(publicId);
+        var resourceType = mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+            ? "image"
+            : "raw";
+
+        return _cloudinary.Api.Url.ResourceType(resourceType).BuildUrl(publicId);
     }
 }

@@ -145,7 +145,7 @@ public class FileService : IFileService
         entity.DownloadCount++;
         await _repository.UpdateAsync(entity);
 
-        var fileUrl = _storageService.GetFileUrl(entity.StoragePath);
+        var fileUrl = _storageService.GetFileUrl(entity.StoragePath, entity.MimeType);
 
         using var httpClient = new HttpClient();
         var stream = await httpClient.GetStreamAsync(fileUrl);
@@ -198,7 +198,7 @@ public class FileService : IFileService
             SizeBytes = entity.SizeBytes,
             DownloadUrl = $"{FrontendUrl}/f/{entity.Code}",
             FileUrl = isImage
-                ? _storageService.GetFileUrl(entity.StoragePath)
+                ? _storageService.GetFileUrl(entity.StoragePath, entity.MimeType)
                 : null,
             DownloadCount = entity.DownloadCount,
             MaxDownloads = entity.MaxDownloads,
