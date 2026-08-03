@@ -55,35 +55,32 @@ public class CloudinaryStorageService : IStorageService
         await _cloudinary.DestroyAsync(deleteParams);
     }
 
-    public async Task<string> ResolveFileUrlAsync(string publicId, string mimeType)
+    public Task<string> ResolveFileUrlAsync(string publicId, string mimeType)
     {
         var isImage = mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
 
-        var candidateUrls = isImage
-            ? new[]
-            {
-                _cloudinary.Api.Url.ResourceType("image").BuildUrl(publicId),
-                _cloudinary.Api.Url.ResourceType("raw").BuildUrl(publicId)
-            }
-            : new[]
-            {
-                _cloudinary.Api.Url.ResourceType("raw").BuildUrl(publicId),
-                _cloudinary.Api.Url.ResourceType("image").BuildUrl(publicId)
-            };
+        var urlBuilder = _cloudinary.Api.Url
+            .Secure(true)
+            .ResourceType(isImage ? "image" : "raw")
+            .Type("upload");
 
-        using var httpClient = new HttpClient();
+        var format = isImage ? GetImageFormat(mimeType) : null;
 
-        foreach (var candidateUrl in candidateUrls.Distinct())
-        {
-            using var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, candidateUrl);
-            using var response = await httpClient.SendAsync(
-                request,
-                HttpCompletionOption.ResponseHeadersRead);
+        var url = format == null 
+            ? urlBuilder.BuildUrl(publicId)
+            : urlBuilder.Format(format).BuildUrl(publicId);
 
-            if (response.IsSuccessStatusCode)
-                return candidateUrl;
-        }
-
-        return candidateUrls[0];
+        return Task.FromResult(url);
     }
-}
+
+    private static string? GetImageFormat(string mimeType)
+    {
+        return mimeType switch
+        {
+            "image/jpeg" => "jpg",
+            "image/png" => "png",
+            "image/gif" => "gif",
+            "image/webp" => "webp",
+            _ => null
+        };
+    }
