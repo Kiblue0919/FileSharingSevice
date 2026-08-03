@@ -153,44 +153,44 @@ public class FileService : IFileService
             entity.MimeType);
     }
 
-    public async Task<(Stream stream, string mimeType, string fileName)>
-        DownloadFileAsync(string code)
+    public async Task<(Stream stream, string mimeType, string fileName)> DownloadFileAsync(string code)
     {
-        var entity = await _repository.GetByCodeAsync(code)
+        var entity = await _repository.GetByCodeAsync(code) 
             ?? throw new KeyNotFoundException("File not found.");
-
-        if (entity.ExpiresAt.HasValue &&
-            entity.ExpiresAt < DateTime.UtcNow)
+    
+        // Check expiry
+        if (entity.ExpiresAt.HasValue && entity.ExpiresAt < DateTime.UtcNow)
         {
             await DeleteFileFromStorageAndDb(entity);
-
-            throw new InvalidOperationException(
-                "EXPIRED:This file has expired and has been deleted.");
+            throw new InvalidOperationException("EXPIRED:This file has expired and has been deleted.");
         }
-
-        if (entity.MaxDownloads.HasValue &&
-            entity.DownloadCount >= entity.MaxDownloads)
+    
+        // Check download limit
+        if (entity.MaxDownloads.HasValue && entity.DownloadCount >= entity.MaxDownloads)
         {
             await DeleteFileFromStorageAndDb(entity);
-
-            throw new InvalidOperationException(
-                "LIMIT:This file has reached its download limit and has been deleted.");
+            throw new InvalidOperationException("LIMIT:This file has reached its download limit and has been deleted.");
         }
-
+    
+        // 1. Resolve Cloudinary URL using entity.StoragePath
+        var fileUrl = await _storageService.ResolveFileUrlAsync(entity.StoragePath, entity.MimeType);
+    
+        // 2. Stream bytes from Cloudinary to Backend
+        using var httpClient = new HttpClient();
+        using var response = await httpClient.GetAsync(fileUrl);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"Storage download failed: {(int)response.StatusCode} {response.StatusCode}");
+        }
+    
+        var fileBytes = await response.Content.ReadAsByteArrayAsync();
+        var stream = new MemoryStream(fileBytes);
+    
+        // 3. Increment download count only after successful file retrieval
         entity.DownloadCount++;
         await _repository.UpdateAsync(entity);
-
-        var fileUrl = await _storageService.ResolveFileUrlAsync(entity.StoragePath, entity.MimeType);
-
-        using var httpClient = new HttpClient();
-        var fileBytes = await httpClient.GetByteArrayAsync(fileUrl);
-        var stream = new MemoryStream(fileBytes);
-
-        return (
-            stream,
-            entity.MimeType,
-            entity.OriginalFileName
-        );
+    
+        return (stream, entity.MimeType, entity.OriginalFileName);
     }
 
     public async Task DeleteFileAsync(string code)
