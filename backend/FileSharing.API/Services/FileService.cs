@@ -11,11 +11,19 @@ public class FileService : IFileService
     private readonly IStorageService _storageService;
 
     private static readonly string[] AllowedImageTypes =
-        { "image/jpeg", "image/png", "image/gif", "image/webp" };
+    {
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp"
+    };
 
     private static readonly string[] AllowedMimeTypes =
     {
-        "image/jpeg", "image/png", "image/gif", "image/webp",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
         "application/pdf",
         "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -25,6 +33,11 @@ public class FileService : IFileService
         "application/zip",
         "video/mp4"
     };
+
+    private string FrontendUrl =>
+        (_configuration["FrontendUrl"]
+            ?? "https://filesharingsevice-production-eb82.up.railway.app")
+        .TrimEnd('/');
 
     public FileService(
         IFileRepository repository,
@@ -39,24 +52,34 @@ public class FileService : IFileService
     public async Task<List<FileResponseDto>> GetAllFilesAsync()
     {
         var entities = await _repository.GetAllAsync();
-        return entities.Select(e => MapToDto(e, "http://localhost:5173")).ToList();
+
+        return entities
+            .Select(entity => MapToDto(entity))
+            .ToList();
     }
 
-    public async Task<FileResponseDto> UploadFileAsync(UploadFileRequestDto request, string baseUrl)
+    public async Task<FileResponseDto> UploadFileAsync(
+        UploadFileRequestDto request)
     {
         if (request.File == null || request.File.Length == 0)
             throw new ArgumentException("No file uploaded.");
 
-        var maxSize = long.Parse(_configuration["FileStorage:MaxFileSizeBytes"] ?? "10485760");
+        var maxSize = long.Parse(
+            _configuration["FileStorage:MaxFileSizeBytes"]
+            ?? "10485760");
+
         if (request.File.Length > maxSize)
-            throw new ArgumentException("File exceeds the maximum allowed size of 10 MB.");
+            throw new ArgumentException(
+                "File exceeds the maximum allowed size of 10 MB.");
 
         if (!AllowedMimeTypes.Contains(request.File.ContentType))
-            throw new ArgumentException($"File type '{request.File.ContentType}' is not allowed.");
+            throw new ArgumentException(
+                $"File type '{request.File.ContentType}' is not allowed.");
 
         var code = GenerateCode();
 
         using var stream = request.File.OpenReadStream();
+
         var publicId = await _storageService.UploadFileAsync(
             stream,
             request.File.FileName,
@@ -83,7 +106,8 @@ public class FileService : IFileService
         };
 
         await _repository.CreateAsync(entity);
-        return MapToDto(entity, baseUrl);
+
+        return MapToDto(entity);
     }
 
     public async Task<FileResponseDto> GetFileMetadataAsync(string code)
@@ -91,37 +115,46 @@ public class FileService : IFileService
         var entity = await _repository.GetByCodeAsync(code)
             ?? throw new KeyNotFoundException("File not found.");
 
-        return MapToDto(entity, "http://localhost:5173");
+        return MapToDto(entity);
     }
 
-    public async Task<(Stream stream, string mimeType, string fileName)> DownloadFileAsync(string code)
+    public async Task<(Stream stream, string mimeType, string fileName)>
+        DownloadFileAsync(string code)
     {
         var entity = await _repository.GetByCodeAsync(code)
             ?? throw new KeyNotFoundException("File not found.");
 
-        if (entity.ExpiresAt.HasValue && entity.ExpiresAt < DateTime.UtcNow)
+        if (entity.ExpiresAt.HasValue &&
+            entity.ExpiresAt < DateTime.UtcNow)
         {
             await DeleteFileFromStorageAndDb(entity);
-            throw new InvalidOperationException("EXPIRED:This file has expired and has been deleted.");
+
+            throw new InvalidOperationException(
+                "EXPIRED:This file has expired and has been deleted.");
         }
 
-        if (entity.MaxDownloads.HasValue && entity.DownloadCount >= entity.MaxDownloads)
+        if (entity.MaxDownloads.HasValue &&
+            entity.DownloadCount >= entity.MaxDownloads)
         {
             await DeleteFileFromStorageAndDb(entity);
-            throw new InvalidOperationException("LIMIT:This file has reached its download limit and has been deleted.");
+
+            throw new InvalidOperationException(
+                "LIMIT:This file has reached its download limit and has been deleted.");
         }
 
         entity.DownloadCount++;
         await _repository.UpdateAsync(entity);
 
-        if (entity.MaxDownloads.HasValue && entity.DownloadCount >= entity.MaxDownloads)
-            await DeleteFileFromStorageAndDb(entity);
-
         var fileUrl = _storageService.GetFileUrl(entity.StoragePath);
-        var httpClient = new HttpClient();
+
+        using var httpClient = new HttpClient();
         var stream = await httpClient.GetStreamAsync(fileUrl);
 
-        return (stream, entity.MimeType, entity.OriginalFileName);
+        return (
+            stream,
+            entity.MimeType,
+            entity.OriginalFileName
+        );
     }
 
     public async Task DeleteFileAsync(string code)
@@ -140,17 +173,22 @@ public class FileService : IFileService
 
     private static string GenerateCode()
     {
-        const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        var random = new Random();
-        return new string(Enumerable.Range(0, 6)
-            .Select(_ => chars[random.Next(chars.Length)])
-            .ToArray());
+        const string chars =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+        return new string(
+            Enumerable.Range(0, 6)
+                .Select(_ => chars[Random.Shared.Next(chars.Length)])
+                .ToArray());
     }
 
-    private FileResponseDto MapToDto(FileEntity entity, string baseUrl)
+    private FileResponseDto MapToDto(FileEntity entity)
     {
         var isImage = AllowedImageTypes.Contains(entity.MimeType);
-        var isExpired = entity.ExpiresAt.HasValue && entity.ExpiresAt < DateTime.UtcNow;
+
+        var isExpired =
+            entity.ExpiresAt.HasValue &&
+            entity.ExpiresAt < DateTime.UtcNow;
 
         return new FileResponseDto
         {
@@ -158,14 +196,17 @@ public class FileService : IFileService
             OriginalFileName = entity.OriginalFileName,
             MimeType = entity.MimeType,
             SizeBytes = entity.SizeBytes,
-            DownloadUrl = string.IsNullOrEmpty(baseUrl) ? "" : $"{baseUrl}/f/{entity.Code}",
-            FileUrl = isImage ? _storageService.GetFileUrl(entity.StoragePath) : null,
+            DownloadUrl = $"{FrontendUrl}/f/{entity.Code}",
+            FileUrl = isImage
+                ? _storageService.GetFileUrl(entity.StoragePath)
+                : null,
             DownloadCount = entity.DownloadCount,
             MaxDownloads = entity.MaxDownloads,
             ExpiresAt = entity.ExpiresAt,
             IsExpired = isExpired,
             IsImage = isImage,
-            IsPasswordProtected = !string.IsNullOrEmpty(entity.PasswordHash),
+            IsPasswordProtected =
+                !string.IsNullOrEmpty(entity.PasswordHash),
             CreatedAt = entity.CreatedAt
         };
     }
