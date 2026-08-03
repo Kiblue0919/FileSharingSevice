@@ -32,9 +32,9 @@ public class FilesController : ControllerBase
                 ExpiresIn = expiresIn,
                 Password = password
             };
-
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var result = await _fileService.UploadFileAsync(request, baseUrl);
+    
+            var result = await _fileService.UploadFileAsync(request);
+    
             return StatusCode(201, result);
         }
         catch (ArgumentException ex)
