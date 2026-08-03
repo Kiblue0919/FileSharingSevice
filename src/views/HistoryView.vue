@@ -11,6 +11,12 @@
 				<p>Loading files...</p>
 			</div>
 			
+			<div v-else-if="errorMessage" class="error-state">
+				<h3>Unable to load file history</h3>
+				<p>{{ errorMessage }}</p>
+				<button @click="load" class="retry-btn">Retry</button>
+			</div>
+			
 			<div v-else>
 				<table v-if="files.length" class="files-table">
 					<thead>
@@ -65,6 +71,7 @@ import { listFiles, updateFile, deleteFile } from '../services/fileService'
 
 const files = ref([])
 const loading = ref(true)
+const errorMessage = ref('')
 
 const editCode = ref(null)
 const editName = ref('')
@@ -78,9 +85,17 @@ const formatBytes = (bytes) => {
 
 const load = async () => {
 	loading.value = true
-	const res = await listFiles()
-	files.value = res.data
-	loading.value = false
+	errorMessage.value = ''
+	try {
+		const res = await listFiles()
+		files.value = res.data
+	} catch (error) {
+		console.error('Failed to load file history:', error)
+		files.value = []
+		errorMessage.value = error.response?.data?.message || 'Failed to load uploaded files.'
+	} finally {
+		loading.value = false
+	}
 }
 
 const startEdit = (f) => {
@@ -170,6 +185,39 @@ onMounted(load)
 	font-size: 16px;
 	color: #666;
 	margin: 0;
+}
+
+.error-state {
+	text-align: center;
+	padding: 60px 20px;
+	color: #b42318;
+	background: #fff5f5;
+	border: 1px solid #fecdca;
+	border-radius: 12px;
+}
+
+.error-state h3 {
+	margin: 0 0 10px;
+	font-size: 20px;
+}
+
+.error-state p {
+	margin: 0 0 20px;
+	color: #7a271a;
+}
+
+.retry-btn {
+	border: none;
+	border-radius: 8px;
+	padding: 10px 16px;
+	background: #d92d20;
+	color: white;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.retry-btn:hover {
+	background: #b42318;
 }
 
 .files-table {
