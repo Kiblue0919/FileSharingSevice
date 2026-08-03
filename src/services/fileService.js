@@ -1,12 +1,14 @@
 import axios from 'axios'
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'https://b-e.up.railway.app'
+
 const api = axios.create({
-  baseURL: 'https://b-e.up.railway.app/api/files'
+  baseURL: `${API_BASE_URL}/api/files`
 })
 
 export const uploadFile = (formData, onUploadProgress) => {
   return api.post('/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
     onUploadProgress
   })
 }
@@ -16,7 +18,7 @@ export const getFileMetadata = (code) => {
 }
 
 export const downloadFile = (code) => {
-  window.open(`https://b-e.up.railway.app/api/files/${code}/download`, '_blank')
+  window.open(`${API_BASE_URL}/api/files/${code}/download`, '_blank')
 }
 
 export const deleteFile = (code) => {

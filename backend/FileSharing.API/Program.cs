@@ -24,11 +24,13 @@ builder.Services.AddHostedService<CleanupHostedService>();
 var frontendUrl = builder.Configuration["FrontendUrl"] 
                 ?? "https://filesharingsevice-production-eb82.up.railway.app";
 
+frontendUrl = frontendUrl.Trim().TrimEnd('/');
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(frontendUrl)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
