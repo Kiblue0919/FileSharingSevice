@@ -43,22 +43,47 @@ public class CloudinaryStorageService : IStorageService
         return result.PublicId;
     }
 
-    public async Task DeleteFileAsync(string publicId)
+    public async Task DeleteFileAsync(string publicId, string mimeType)
     {
         var deleteParams = new DeletionParams(publicId)
         {
-            ResourceType = ResourceType.Raw
+            ResourceType = mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+                ? ResourceType.Image
+                : ResourceType.Raw
         };
 
         await _cloudinary.DestroyAsync(deleteParams);
     }
 
-    public string GetFileUrl(string publicId, string mimeType)
+    public async Task<string> ResolveFileUrlAsync(string publicId, string mimeType)
     {
-        var resourceType = mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
-            ? "image"
-            : "raw";
+        var isImage = mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
 
-        return _cloudinary.Api.Url.ResourceType(resourceType).BuildUrl(publicId);
+        var candidateUrls = isImage
+            ? new[]
+            {
+                _cloudinary.Api.Url.ResourceType("image").BuildUrl(publicId),
+                _cloudinary.Api.Url.ResourceType("raw").BuildUrl(publicId)
+            }
+            : new[]
+            {
+                _cloudinary.Api.Url.ResourceType("raw").BuildUrl(publicId),
+                _cloudinary.Api.Url.ResourceType("image").BuildUrl(publicId)
+            };
+
+        using var httpClient = new HttpClient();
+
+        foreach (var candidateUrl in candidateUrls.Distinct())
+        {
+            using var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, candidateUrl);
+            using var response = await httpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead);
+
+            if (response.IsSuccessStatusCode)
+                return candidateUrl;
+        }
+
+        return candidateUrls[0];
     }
 }

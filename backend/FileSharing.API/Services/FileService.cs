@@ -52,10 +52,14 @@ public class FileService : IFileService
     public async Task<List<FileResponseDto>> GetAllFilesAsync()
     {
         var entities = await _repository.GetAllAsync();
+        var result = new List<FileResponseDto>();
 
-        return entities
-            .Select(entity => MapToDto(entity))
-            .ToList();
+        foreach (var entity in entities)
+        {
+            result.Add(await MapToDtoAsync(entity));
+        }
+
+        return result;
     }
 
     public async Task<FileResponseDto> UploadFileAsync(
@@ -107,7 +111,7 @@ public class FileService : IFileService
 
         await _repository.CreateAsync(entity);
 
-        return MapToDto(entity);
+        return await MapToDtoAsync(entity);
     }
 
     public async Task<FileResponseDto> GetFileMetadataAsync(string code)
@@ -115,7 +119,7 @@ public class FileService : IFileService
         var entity = await _repository.GetByCodeAsync(code)
             ?? throw new KeyNotFoundException("File not found.");
 
-        return MapToDto(entity);
+        return await MapToDtoAsync(entity);
     }
 
     public async Task<(Stream stream, string mimeType, string fileName)>
@@ -145,10 +149,11 @@ public class FileService : IFileService
         entity.DownloadCount++;
         await _repository.UpdateAsync(entity);
 
-        var fileUrl = _storageService.GetFileUrl(entity.StoragePath, entity.MimeType);
+        var fileUrl = await _storageService.ResolveFileUrlAsync(entity.StoragePath, entity.MimeType);
 
         using var httpClient = new HttpClient();
-        var stream = await httpClient.GetStreamAsync(fileUrl);
+        var fileBytes = await httpClient.GetByteArrayAsync(fileUrl);
+        var stream = new MemoryStream(fileBytes);
 
         return (
             stream,
@@ -167,7 +172,7 @@ public class FileService : IFileService
 
     private async Task DeleteFileFromStorageAndDb(FileEntity entity)
     {
-        await _storageService.DeleteFileAsync(entity.StoragePath);
+        await _storageService.DeleteFileAsync(entity.StoragePath, entity.MimeType);
         await _repository.DeleteAsync(entity);
     }
 
@@ -182,7 +187,7 @@ public class FileService : IFileService
                 .ToArray());
     }
 
-    private FileResponseDto MapToDto(FileEntity entity)
+    private async Task<FileResponseDto> MapToDtoAsync(FileEntity entity)
     {
         var isImage = AllowedImageTypes.Contains(entity.MimeType);
 
@@ -198,7 +203,7 @@ public class FileService : IFileService
             SizeBytes = entity.SizeBytes,
             DownloadUrl = $"{FrontendUrl}/f/{entity.Code}",
             FileUrl = isImage
-                ? _storageService.GetFileUrl(entity.StoragePath, entity.MimeType)
+                ? await _storageService.ResolveFileUrlAsync(entity.StoragePath, entity.MimeType)
                 : null,
             DownloadCount = entity.DownloadCount,
             MaxDownloads = entity.MaxDownloads,
