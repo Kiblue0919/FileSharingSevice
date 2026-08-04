@@ -8,19 +8,19 @@ The system is built using **ASP.NET Core Web API**, **Vue 3**, **MySQL**, **Clou
 
 ---
 
-## 1. Live Application
+# 1. Live Application
 
 ### Frontend
 
-https://magnificent-motivation-production-ccf8.up.railway.app
+https://filesharingsevice-production-eb82.up.railway.app
 
 ### Backend API
 
-https://filesharingsevice-production-187e.up.railway.app
+https://b-e.up.railway.app
 
 ### Swagger API Documentation
 
-https://filesharingsevice-production-187e.up.railway.app/swagger
+https://b-e.up.railway.app/swagger
 
 ### Repository
 
