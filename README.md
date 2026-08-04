@@ -1,38 +1,141 @@
-# .
+# File & Image Sharing Service
 
-This template should help get you started developing with Vue 3 in Vite.
+A full-stack file and image sharing service developed for **AMD201 — Advanced Microservices Deployment, Topic 3**.
 
-## Recommended IDE Setup
+The application allows users to upload files, receive a unique short sharing link, preview supported images, download files, view upload history, configure expiry/download limits, and delete uploaded files.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+The system is built using **ASP.NET Core Web API**, **Vue 3**, **MySQL**, **Cloudinary**, **Docker**, and **GitHub Actions**.
 
-## Recommended Browser Setup
+---
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+## 1. Live Application
 
-## Customize configuration
+### Frontend
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+https://magnificent-motivation-production-ccf8.up.railway.app
 
-## Project Setup
+### Backend API
 
-```sh
-npm install
-```
+https://filesharingsevice-production-187e.up.railway.app
 
-### Compile and Hot-Reload for Development
+### Swagger API Documentation
 
-```sh
-npm run dev
-```
+https://filesharingsevice-production-187e.up.railway.app/swagger
 
-### Compile and Minify for Production
+### Repository
 
-```sh
-npm run build
-```
+https://github.com/Kiblue0919/FileSharingSevice
+
+---
+
+## 2. Features
+
+### Core Features
+
+- Upload files up to 10 MB
+- Drag-and-drop file upload
+- File picker upload
+- Unique short sharing code generated for each upload
+- Shareable file links
+- File metadata retrieval
+- File download
+- Inline image preview
+- Upload history
+- File deletion
+- File size validation
+- Server-side MIME type validation
+- Expiry options:
+  - 1 hour
+  - 1 day
+  - 1 week
+  - Never
+- Download limits
+- Automatic handling of expired files
+- Automatic cleanup of expired files through a background service
+
+### Additional Features
+
+- Cloudinary cloud storage
+- Upload progress bar
+- Swagger API documentation
+- Multi-stage Docker build
+- GitHub Actions CI pipeline
+- Automated backend/frontend build checks
+- Unit tests using xUnit, Moq and FluentAssertions
+
+---
+
+# 3. Technology Stack
+
+## Backend
+
+| Technology | Purpose |
+|---|---|
+| ASP.NET Core .NET 8 | REST API |
+| Entity Framework Core 8 | ORM / database access |
+| Pomelo.EntityFrameworkCore.MySql | MySQL provider |
+| CloudinaryDotNet | Cloud file storage |
+| Swashbuckle.AspNetCore | Swagger API documentation |
+| xUnit | Unit testing |
+| Moq | Dependency mocking |
+| FluentAssertions | Test assertions |
+
+## Frontend
+
+| Technology | Purpose |
+|---|---|
+| Vue 3 | SPA framework |
+| Vue Router | Client-side routing |
+| Vite | Development server and build tool |
+| Axios | HTTP API communication |
+
+## Infrastructure / DevOps
+
+| Technology | Purpose |
+|---|---|
+| GitHub | Source control |
+| GitHub Actions | Continuous Integration |
+| Docker | Backend containerisation |
+| Railway | Cloud deployment |
+| MySQL | Relational database |
+| Cloudinary | Cloud file storage |
+| Postman | API testing |
+| Visual Studio 2022 | Backend development |
+| VS Code | Frontend development |
+
+---
+
+# 4. System Architecture
+
+The system uses a three-tier architecture.
+
+```text
+                         USER
+                           |
+                           | HTTP / HTTPS
+                           v
+                +-----------------------+
+                |     Vue 3 Frontend    |
+                |       Vite SPA        |
+                +-----------+-----------+
+                            |
+                            | REST API
+                            v
+              +-----------------------------+
+              |     ASP.NET Core Web API    |
+              |          .NET 8             |
+              +-------------+---------------+
+                            |
+              +-------------+-------------+
+              |                           |
+              v                           v
+      +---------------+          +------------------+
+      |    MySQL      |          |    Cloudinary    |
+      |   Database    |          |   Cloud Storage  |
+      +---------------+          +------------------+
+              |
+              |
+       File Metadata
+       
+Cloudinary stores the actual uploaded file bytes.
+MySQL stores file metadata and application state.
